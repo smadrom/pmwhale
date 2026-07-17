@@ -94,12 +94,20 @@ def main(n_markets: int = 40, holders_per_market: int = 50,
     try:
         wallets = seed_wallets(pc, n_markets, holders_per_market, min_amount)
         print(f"Уникальных китов (amount>={min_amount}): {len(wallets)}")
+        failed = 0
         for i, w in enumerate(wallets, 1):
             total = 0
-            for t in pc.iter_trades(w):
-                total += store_trades(con, w, [t])
-            con.commit()
-            print(f"[{i}/{len(wallets)}] {w}: +{total} сделок")
+            try:
+                for t in pc.iter_trades(w):
+                    total += store_trades(con, w, [t])
+                con.commit()
+                print(f"[{i}/{len(wallets)}] {w}: +{total} сделок")
+            except Exception as e:  # один кит не должен ронять весь сбор
+                con.commit()  # сохранить, что успели по этому кошельку
+                failed += 1
+                print(f"[{i}/{len(wallets)}] {w}: FAIL {type(e).__name__} "
+                      f"(частично +{total}) — пропускаю")
+        print(f"Готово. Ошибочных кошельков: {failed}/{len(wallets)}")
     finally:
         pc.close()
         con.close()

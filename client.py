@@ -34,15 +34,26 @@ class PolyClient:
             time.sleep(_MIN_INTERVAL - dt)
         self._last = time.monotonic()
 
+    # транзиентные статусы, которые имеет смысл повторить
+    _RETRY_STATUS = frozenset({408, 425, 429, 500, 502, 503, 504})
+
     def _get(self, base: str, path: str, **params: Any) -> Any:
-        self._throttle()
-        for attempt in range(5):
-            r = self._c.get(f"{base}{path}", params=params)
-            if r.status_code == 429:  # backoff на rate-limit
-                time.sleep(2 ** attempt)
+        last_exc: Exception | None = None
+        for attempt in range(6):
+            self._throttle()
+            try:
+                r = self._c.get(f"{base}{path}", params=params)
+            except (httpx.TimeoutException, httpx.TransportError) as e:
+                last_exc = e                     # сетевой сбой — ретраим
+                time.sleep(min(2 ** attempt, 20))
+                continue
+            if r.status_code in self._RETRY_STATUS:
+                time.sleep(min(2 ** attempt, 20))
                 continue
             r.raise_for_status()
             return r.json()
+        if last_exc is not None:
+            raise last_exc
         r.raise_for_status()
 
     # ---- Gamma API (рынки) ---------------------------------------------
