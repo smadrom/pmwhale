@@ -74,7 +74,11 @@ def seed_wallets(pc: PolyClient, n_markets: int, holders_per_market: int,
         except Exception as e:  # рынок без холдеров/ошибка — пропускаем
             print(f"  holders fail {cond[:10]}: {type(e).__name__}")
             continue
+        if not isinstance(groups, list):  # эндпоинт может вернуть null/dict
+            continue
         for g in groups:
+            if not isinstance(g, dict):
+                continue
             for h in g.get("holders", []):
                 w = h.get("proxyWallet")
                 if w and float(h.get("amount", 0) or 0) >= min_amount:
