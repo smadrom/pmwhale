@@ -1,0 +1,26 @@
+# venv
+.venv/
+venv/
+env/
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# данные / артефакты сбора (не коммитим — большие и приватные)
+*.db
+*.sqlite
+*.sqlite3
+*.log
+data/
+_probe.py
+
+# editor / os
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
