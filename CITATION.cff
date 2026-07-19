@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use pmwhale in research, cite the software and the exact release tag."
+title: "pmwhale"
+type: software
+version: 0.1.0
+authors:
+  - name: "smadrom"
+    email: "sn.one.dev@gmail.com"
+repository-code: "https://github.com/smadrom/pmwhale"
+url: "https://github.com/smadrom/pmwhale"
+license: MIT

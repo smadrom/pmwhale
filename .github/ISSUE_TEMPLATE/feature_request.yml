@@ -1,0 +1,32 @@
+name: Feature request
+description: Propose a focused research or engineering improvement
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Research or user problem
+      description: Explain the problem before proposing an implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+    validations:
+      required: true
+  - type: textarea
+    id: validity
+    attributes:
+      label: Validity and safety considerations
+      description: Cover evidence, look-ahead, third-party contracts, privacy, and misleading-output risks.
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This does not require credentials, private keys, automated trading, or deanonymization.
+          required: true

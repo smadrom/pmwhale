@@ -1,15 +1,21 @@
 services:
   pmwhale-ui:
-    build: .
+    build:
+      context: ..
+      dockerfile: ui/Dockerfile
     image: pmwhale-ui:latest
-    container_name: pmwhale-ui
-    # Порт слушаем только на localhost — наружу через SSH-туннель, не публично.
     ports:
       - "127.0.0.1:5178:5178"
     volumes:
-      # БД со сбором монтируется только на чтение.
       - ${PMWHALE_DB:-../pmwhale.db}:/data/pmwhale.db:ro
     environment:
       PORT: "5178"
       DB_PATH: /data/pmwhale.db
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped

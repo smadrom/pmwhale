@@ -1,0 +1,56 @@
+name: Bug report
+description: Report reproducible incorrect behavior
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include credentials, databases, private data, or real-person wallet attribution.
+        Report vulnerabilities privately according to SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: v0.1.0 or commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Collector/API client
+        - Ranking
+        - Placeholder backtest
+        - Dashboard/UI
+        - Packaging/CI/documentation
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide a minimal command or sanitized fixture.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python/Bun version, and relevant dependency versions.
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed secrets, private data, and deanonymization claims.
+          required: true

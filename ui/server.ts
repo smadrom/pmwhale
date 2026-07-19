@@ -1,20 +1,54 @@
-// Bun-сервер: API поверх pmwhale.db (bun:sqlite) + раздача собранного фронта.
-// Один порт, один процесс. DB монтируется в контейнер только на чтение.
 import { Database } from "bun:sqlite";
-import { join, normalize } from "node:path";
+import { extname, isAbsolute, relative, resolve } from "node:path";
 
 const PORT = Number(process.env.PORT ?? 5178);
 const DB_PATH = process.env.DB_PATH ?? "/data/pmwhale.db";
-const DIST = process.env.DIST_DIR ?? join(import.meta.dir, "dist");
+const DIST = resolve(process.env.DIST_DIR ?? resolve(import.meta.dir, "dist"));
 
 const db = new Database(DB_PATH, { readonly: true });
-db.exec("PRAGMA busy_timeout = 3000;"); // сбор может писать в БД параллельно
+db.exec("PRAGMA busy_timeout = 3000;");
+
+const SECURITY_HEADERS = {
+  "content-security-policy":
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; " +
+    "img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+  "cross-origin-resource-policy": "same-origin",
+  "referrer-policy": "no-referrer",
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "DENY",
+};
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8" },
+    headers: {
+      ...SECURITY_HEADERS,
+      "content-type": "application/json; charset=utf-8",
+    },
   });
+
+class HttpError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+function boundedInteger(
+  raw: string | null,
+  fallback: number,
+  minimum: number,
+  maximum: number,
+): number {
+  if (raw === null) return fallback;
+  if (!/^\d+$/.test(raw)) throw new HttpError(400, "invalid integer query parameter");
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value) || value < minimum)
+    throw new HttpError(400, "integer query parameter is out of range");
+  return Math.min(value, maximum);
+}
 
 function getStats() {
   const t = db.query("SELECT COUNT(*) c FROM trades").get() as { c: number };
@@ -101,16 +135,27 @@ function getWalletTrades(addr: string, limit: number) {
 }
 
 async function serveStatic(pathname: string): Promise<Response> {
-  const rel = pathname === "/" ? "/index.html" : pathname;
-  // защита от path traversal
-  const safe = normalize(join(DIST, rel)).replace(/^(\.\.[/\\])+/, "");
-  let file = Bun.file(safe);
-  if (!(await file.exists())) file = Bun.file(join(DIST, "index.html")); // SPA fallback
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(pathname).replace(/\\/g, "/");
+  } catch {
+    throw new HttpError(400, "invalid URL encoding");
+  }
+  if (decoded.includes("\0")) throw new HttpError(400, "invalid path");
+
+  const requested = resolve(DIST, decoded === "/" ? "index.html" : decoded.replace(/^\/+/, ""));
+  const fromRoot = relative(DIST, requested);
+  if (fromRoot.startsWith("..") || isAbsolute(fromRoot))
+    throw new HttpError(404, "not found");
+
+  let file = Bun.file(requested);
+  if (!(await file.exists()) && !extname(decoded)) file = Bun.file(resolve(DIST, "index.html"));
   if (!(await file.exists()))
-    return new Response("UI не собран (нет dist/). Запусти `bun run build`.", {
+    return new Response("not found", {
       status: 404,
+      headers: SECURITY_HEADERS,
     });
-  return new Response(file);
+  return new Response(file, { headers: SECURITY_HEADERS });
 }
 
 Bun.serve({
@@ -120,24 +165,28 @@ Bun.serve({
     const url = new URL(req.url);
     const p = url.pathname;
     try {
-      if (p === "/api/health") return json({ ok: true, db: DB_PATH });
+      if (req.method !== "GET" && req.method !== "HEAD")
+        return json({ error: "method not allowed" }, 405);
+      if (p === "/api/health") return json({ ok: true });
       if (p === "/api/stats") return json(getStats());
       if (p === "/api/wallets") {
-        const limit = Math.min(200, Number(url.searchParams.get("limit") ?? 25));
-        const minPos = Number(url.searchParams.get("min_positions") ?? 10);
+        const limit = boundedInteger(url.searchParams.get("limit"), 25, 1, 200);
+        const minPos = boundedInteger(url.searchParams.get("min_positions"), 10, 1, 10_000);
         return json({ wallets: getWallets(limit, minPos) });
       }
-      const tm = p.match(/^\/api\/wallets\/(0x[0-9a-fA-F]+)\/trades$/);
+      const tm = p.match(/^\/api\/wallets\/(0x[0-9a-fA-F]{40})\/trades$/);
       if (tm) {
-        const limit = Math.min(500, Number(url.searchParams.get("limit") ?? 50));
+        const limit = boundedInteger(url.searchParams.get("limit"), 50, 1, 500);
         return json({ trades: getWalletTrades(tm[1], limit) });
       }
       if (p.startsWith("/api/")) return json({ error: "not found" }, 404);
       return await serveStatic(p);
-    } catch (e: any) {
-      return json({ error: String(e?.message ?? e) }, 500);
+    } catch (error: unknown) {
+      if (error instanceof HttpError) return json({ error: error.message }, error.status);
+      console.error("request failed", error);
+      return json({ error: "internal server error" }, 500);
     }
   },
 });
 
-console.log(`pmwhale-ui on http://0.0.0.0:${PORT}  (db=${DB_PATH})`);
+console.log(`pmwhale-ui listening on http://0.0.0.0:${PORT}`);

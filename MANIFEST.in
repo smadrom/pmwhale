@@ -1,0 +1,14 @@
+include CHANGELOG.md
+include CITATION.cff
+include CODE_OF_CONDUCT.md
+include CONTRIBUTING.md
+include SECURITY.md
+include SUPPORT.md
+include requirements.txt
+include backtest.py
+include client.py
+include collect.py
+include rank.py
+recursive-include docs *.md
+global-exclude __pycache__
+global-exclude *.py[cod]
