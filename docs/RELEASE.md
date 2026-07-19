@@ -2,8 +2,9 @@
 
 ## Current status
 
-Target: `v0.1.0` public research preview. The repository is public and the
-release candidate is ready to tag after the final documentation-only CI run.
+`v0.1.0` was published on 2026-07-19 as a public, immutable GitHub release:
+<https://github.com/smadrom/pmwhale/releases/tag/v0.1.0>. The annotated tag
+resolves to commit `4f1dce7`.
 
 ## Completed
 
@@ -25,6 +26,8 @@ release candidate is ready to tag after the final documentation-only CI run.
   conversations, linear history, and all CI and CodeQL contexts. Force pushes
   and branch deletion are disabled.
 - GitHub Actions requires full commit-SHA pinning for actions.
+- The verified wheel, source distribution, and checksum manifest were published
+  in the immutable `v0.1.0` release.
 
 ## Verification
 
@@ -99,11 +102,27 @@ Local release-candidate results on 2026-07-19:
   zero open alerts after the successful CodeQL run.
 - Docker remains unavailable locally, but the required GitHub-hosted Docker job
   built the actual image and passed its container smoke test.
+- Final GitHub-hosted CI run
+  [29677735942](https://github.com/smadrom/pmwhale/actions/runs/29677735942)
+  — PASS on tagged commit `4f1dce7`, including the Docker image smoke test.
+- Final CodeQL run
+  [29677735951](https://github.com/smadrom/pmwhale/actions/runs/29677735951)
+  — PASS on tagged commit `4f1dce7` for Python and JavaScript/TypeScript.
+- Release workflow run
+  [29677801011](https://github.com/smadrom/pmwhale/actions/runs/29677801011)
+  — PASS; validated the annotated tag and version, repeated Python checks,
+  built both distributions, generated `SHA256SUMS`, and created the draft.
+- The downloaded draft assets matched `SHA256SUMS`; the wheel digest is
+  `40996f355bb951258ac6a588e3971659de8cbcb558e24df69d099876c79b5a5e`
+  and the source archive digest is
+  `201645ce1c95f11185f0797f32df673b190f94359f0a22d12e4bec7c1d441c3a`.
+  Fresh execution of `pmwhale-collect --help` from that wheel — PASS.
+- The public release page identifies `v0.1.0` as latest and immutable; GitHub's
+  release API reports `draft=false` and `immutable=true`.
 
 ## Open gates
 
-- Obtain green GitHub-hosted CI and CodeQL results on the final
-  documentation-only commit, then create and publish the immutable release.
+None for `v0.1.0`.
 
 The prepared social preview still needs a manual upload in GitHub Settings; no
 supported API is available for that UI-only operation. This does not affect the
@@ -135,8 +154,7 @@ source, security posture, build artifacts, or release verification.
 
 ## Next steps
 
-Obtain green CI on the final documentation-only commit, publish `v0.1.0` as a
-clearly labeled research preview, verify its downloadable artifacts, and upload
-the prepared social preview through GitHub Settings when a signed-in browser is
-available. Continue reviewing third-party API terms and jurisdictional wording
-as an ongoing maintenance responsibility.
+Upload the prepared social preview through GitHub Settings when a signed-in
+browser is available. Continue dependency maintenance, security-alert review,
+and review of third-party API terms and jurisdictional wording as ongoing
+maintenance responsibilities.
