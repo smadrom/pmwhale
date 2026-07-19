@@ -2,9 +2,8 @@
 
 ## Current status
 
-Target: `v0.1.0` public research preview. The repository is release-candidate
-ready only after every open gate below is closed or explicitly accepted by the
-maintainer.
+Target: `v0.1.0` public research preview. The repository is public and the
+release candidate is ready to tag after the final documentation-only CI run.
 
 ## Completed
 
@@ -17,6 +16,15 @@ maintainer.
 - Misleading latency/settlement claims removed; placeholder model fails closed.
 - A 1280×640 social-preview image under GitHub's 1 MB limit is prepared at
   `.github/social-preview.jpg`.
+- The GitHub repository is public with the release description and project
+  topics applied.
+- Dependabot vulnerability alerts and security updates, secret scanning with
+  push protection, private vulnerability reporting, and immutable releases are
+  enabled.
+- `main` requires an up-to-date branch, pull-request flow, resolved
+  conversations, linear history, and all CI and CodeQL contexts. Force pushes
+  and branch deletion are disabled.
+- GitHub Actions requires full commit-SHA pinning for actions.
 
 ## Verification
 
@@ -80,28 +88,26 @@ Local release-candidate results on 2026-07-19:
 - The `pmwhale` project name returned 404 from both PyPI and TestPyPI on
   2026-07-19, so it appeared unclaimed at the time of this check. Availability
   is not reserved until a package is uploaded.
-- GitHub repository audit — repository is private, has no topics, has an outdated
-  description, vulnerability alerts are disabled, private vulnerability
-  reporting is unavailable, immutable releases are disabled, and protection
-  rules cannot be configured on the current private/free setup. Actions are
-  enabled with read-only default workflow permissions; current workflow actions
-  are pinned to full commit SHAs.
-- Docker image build — SKIPPED locally because Docker is unavailable. The CI
-  candidate includes a GitHub-hosted job that builds the image, starts it with a
-  read-only smoke database, and checks the health and stats endpoints; this gate
-  remains open until that job passes remotely.
+- GitHub-hosted CI run
+  [29677166322](https://github.com/smadrom/pmwhale/actions/runs/29677166322)
+  — PASS on commit `aeb4020` for Python 3.11–3.14, package build, UI, and the
+  Docker image build plus container health/stats smoke test.
+- CodeQL run
+  [29677314348](https://github.com/smadrom/pmwhale/actions/runs/29677314348)
+  — PASS on commit `aeb4020` for Python and JavaScript/TypeScript.
+- GitHub code-scanning, secret-scanning, and Dependabot alert queues — PASS,
+  zero open alerts after the successful CodeQL run.
+- Docker remains unavailable locally, but the required GitHub-hosted Docker job
+  built the actual image and passed its container smoke test.
 
 ## Open gates
 
-- Enable GitHub private vulnerability reporting, secret scanning, push
-  protection, Dependabot alerts/security updates, and immutable releases.
-- Configure branch protection for `main` with the Python and UI CI jobs required.
-- Replace the outdated GitHub description, add topics, upload the prepared
-  social preview, and change repository visibility to public.
-- Obtain green GitHub-hosted CI and CodeQL results on the final commit.
-- Obtain a passing GitHub-hosted Docker image build and health check.
-- Review third-party API terms and jurisdictional wording for the intended
-  audience.
+- Obtain green GitHub-hosted CI and CodeQL results on the final
+  documentation-only commit, then create and publish the immutable release.
+
+The prepared social preview still needs a manual upload in GitHub Settings; no
+supported API is available for that UI-only operation. This does not affect the
+source, security posture, build artifacts, or release verification.
 
 ## Release procedure
 
@@ -129,5 +135,8 @@ Local release-candidate results on 2026-07-19:
 
 ## Next steps
 
-Close the repository-setting gates, obtain green CI on the final commit, and
-publish `v0.1.0` as a clearly labeled research preview.
+Obtain green CI on the final documentation-only commit, publish `v0.1.0` as a
+clearly labeled research preview, verify its downloadable artifacts, and upload
+the prepared social preview through GitHub Settings when a signed-in browser is
+available. Continue reviewing third-party API terms and jurisdictional wording
+as an ongoing maintenance responsibility.
