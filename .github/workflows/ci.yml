@@ -138,7 +138,7 @@ jobs:
               )
           PY
       - name: Build container image
-        run: docker build --tag pmwhale-ui:ci .
+        run: docker build --file ui/Dockerfile --tag pmwhale-ui:ci .
       - name: Run container smoke test
         run: |
           docker run --detach --name pmwhale-ui-smoke \
